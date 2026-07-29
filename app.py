@@ -43,15 +43,26 @@ st.divider()
 with st.sidebar:
     st.header("📋 Identificação do Cliente")
     client_name = st.text_input("Empresa / Cliente", "Empresa Exemplo S.A.")
-    industry = st.selectbox("Setor de Atuação", ["Indústria", "Saúde / Hospitalar", "Educação", "Serviços / Varejo", "Tecnologia / Logística", "Construção / Engenharia"])
+    industry = st.selectbox("Setor de Atuação", [
+        "Construção / Engenharia",
+        "Indústria",
+        "Tecnologia / Logística",
+        "Saúde / Hospitalar",
+        "Serviços / Varejo",
+        "Educação"
+    ])
     consultant = st.text_input("Consultor Responsável", "Consultor Smart")
-    project_scope = st.selectbox("Porte da Operação", ["Pequeno (Até 100 colaboradores)", "Médio (100 a 500 colaboradores)", "Grande (Acima de 500 colaboradores)"])
+    project_scope = st.selectbox("Porte da Operação", [
+        "Pequeno (Até 100 colaboradores)",
+        "Médio (100 a 500 colaboradores)",
+        "Grande (Acima de 500 colaboradores)"
+    ])
     
     st.divider()
     st.markdown("**Alinhamento Metodológico:**")
     st.caption("• Governança: IBGC\n• Projetos: PMI\n• Processos: ABMPP / BPM\n• Gestão de Mudanças: HUCMI\n• Qualidade: QA / PDCA")
 
-# Estrutura com 5 Perguntas por Tópico e Opções Não-Ordenadas (Embaralhadas)
+# Estrutura com 5 Perguntas por Tópico e Opções Não-Ordenadas
 questions = {
     "Pilar 1: Governança Corporativa (IBGC)": [
         {
@@ -81,7 +92,7 @@ questions = {
                 ("Gestão informal focada em exigências básicas (fiscais/trabalhistas) quando cobradas.", 2),
                 ("Matriz de Riscos atualizada, compliance estruturado e código de conduta amplamente disseminado.", 4),
                 ("Inexistente; riscos são tratados apenas quando viram crises ou prejuízos reais.", 1),
-                ("Mapeamento dos principais riscos operacionais/financeiros com controles internos básicos implementados.", 3)
+                ("Mapeamento dos principais riscos operacionais/financials com controles internos básicos implementados.", 3)
             ]
         },
         {
@@ -112,7 +123,7 @@ questions = {
             "options": [
                 ("Há metodologia definida para grandes projetos (escopo, cronograma, custo), mas com adesão parcial.", 3),
                 ("Usa-se planilhas básicas ou listas de tarefas, mas prazos e custos frequentemente estouram.", 2),
-                ("Metodologia padrão institutionalizada (Ágil/Híbrida), com baseline rigoroso e baixo nível de desvios.", 4),
+                ("Metodologia padrão institucionalizada (Ágil/Híbrida), com baseline rigoroso e baixo nível de desvios.", 4),
                 ("Não há padrão; cada profissional ou área gerencia projetos do seu próprio jeito.", 1)
             ]
         },
@@ -335,16 +346,31 @@ with tab_diag:
                         options=labels,
                         key=q["id"]
                     )
-                    # Resgata a pontuação real (1 a 4) atrelada à opção selecionada
                     score_val = [opt[1] for opt in q["options"] if opt[0] == choice][0]
                     pillar_scores.append(score_val)
                 
-                # Mapeamento da média do pilar (escala 1 a 4) para pontuação final (1.0 a 5.0)
                 raw_avg = np.mean(pillar_scores)
                 norm_score = round(((raw_avg - 1) / 3) * 4 + 1, 2)
                 scores[pillar_name] = norm_score
 
         submit_btn = st.form_submit_button("Calcular Maturidade e Gerar Relatório Executivo 🚀")
+
+# ==============================================================================
+# LÓGICA DE PESOS DINÂMICOS BASEADA NO SETOR E PORTE
+# ==============================================================================
+# Ordem dos pilares: [Gov, Proj, Proc, Chg, QA]
+if industry in ["Construção / Engenharia", "Indústria"]:
+    # Enfase em Processos e Qualidade
+    weights = [0.15, 0.20, 0.30, 0.15, 0.20]
+elif industry in ["Tecnologia / Logística"]:
+    # Ênfase em Projetos e Mudança Organizacional
+    weights = [0.15, 0.30, 0.20, 0.20, 0.15]
+elif industry in ["Saúde / Hospitalar"]:
+    # Ênfase em Qualidade, Processos e Governança
+    weights = [0.20, 0.15, 0.25, 0.15, 0.25]
+else:
+    # Padrão balanceado para Serviços, Varejo, Educação
+    weights = [0.15, 0.25, 0.25, 0.20, 0.15]
 
 # Atribuição de Notas Consolidadas
 score_gov = scores.get("Pilar 1: Governança Corporativa (IBGC)", 1.0)
@@ -353,9 +379,6 @@ score_proc = scores.get("Pilar 3: Gestão de Processos & BPM (ABMPP)", 1.0)
 score_chg = scores.get("Pilar 4: Gestão de Mudanças Organizacionais - GMO (HUCMI)", 1.0)
 score_qa = scores.get("Pilar 5: Garantia da Qualidade & QA", 1.0)
 
-# Índice de Prontidão para Execução Ponderado (0 a 100%)
-# Pesos: Projetos (25%), Processos (25%), Mudanças (20%), Governança (15%), Qualidade (15%)
-weights = [0.15, 0.25, 0.25, 0.20, 0.15]
 pill_scores = [score_gov, score_proj, score_proc, score_chg, score_qa]
 overall_score = sum(s * w for s, w in zip(pill_scores, weights))
 execution_readiness_pct = round(((overall_score - 1) / 4) * 100, 1)
@@ -381,9 +404,10 @@ with tab_report:
         lowest_pillar = min(scores, key=scores.get)
         st.metric("Gargalo Principal", lowest_pillar.split(":")[1].split("(")[0].strip())
 
-    st.subheader("1. Maturidade Calculada por Pilar (Escala de 1.0 a 5.0)")
+    st.subheader("1. Maturidade Calculada por Pilar (Ajustada ao Setor)")
     
-    # Tabela de Resultados
+    # Tabela de Resultados Dinâmica
+    formatted_weights = [f"{int(w*100)}%" for w in weights]
     df_scores = pd.DataFrame({
         "Pilar de Atuação Smart": [p.split(":")[1].strip() for p in scores.keys()],
         "Nota Obtida (1-5)": list(scores.values()),
@@ -391,49 +415,59 @@ with tab_report:
             "Inexistente / Reativo" if v < 2.2 else "Parcial / Informal" if v < 3.5 else "Padronizado / Estruturado" if v < 4.5 else "Otimizado / Referência"
             for v in scores.values()
         ],
-        "Peso Estratégico": ["15%", "25%", "25%", "20%", "15%"]
+        "Peso Estratégico (Ponderado)": formatted_weights
     })
     st.dataframe(df_scores, use_container_width=True)
 
     st.subheader("2. Análise Técnica de Gargalos Operacionais")
     
+    # Alertas genéricos por nota
     if score_proj < 3.0 or score_proc < 3.0:
         st.error("""
         **🚨 Alerta de Gargalo Operacional (Execução em Risco):**
-        A organização apresenta fragilidades graves no acompanhamento de projetos ou na padronização de processos. 
-        Iniciativas estratégicas tendem a sofrer estouros orçamentários, atrasos em prazos e alto volume de retrabalho.
+        A organização apresenta fragilidades no acompanhamento de projetos ou na padronização de processos.
+        Iniciativas estratégicas tendem a sofrer estouros orçamentários, atrasos e alto volume de retrabalho.
         """)
     
     if score_chg < 3.0:
         st.warning("""
         **⚠️ Alerta de Fator Humano e Gestão de Mudança (GMO):**
-        Baixa capacidade de absorção cultural para novos sistemas e metodologias. Há alto risco de resistência passiva e abandono de novas ferramentas após a implantação.
+        Baixa capacidade de absorção cultural para novos sistemas e metodologias. Alto risco de resistência passiva.
         """)
 
-    if score_gov < 2.8:
-        st.info("""
-        **💡 Alerta de Governança e Alinhamento Liderança:**
-        A falta de ritos estruturados de prestação de contas faz com que a estratégia perca espaço para a rotina de "apagar incêndios".
-        """)
+    # Alerta específico adaptado ao SETOR
+    if industry in ["Construção / Engenharia", "Indústria"] and (score_proc < 3.5 or score_qa < 3.5):
+        st.error(f"**🏭 Sensibilidade Setorial ({industry}):** A baixa padronização de processos ou controle de qualidade em operações intensivas gera forte margem de desperdício financeiro e falhas diretas em canteiros/linhas de produção.")
+    elif industry in ["Tecnologia / Logística"] and score_proj < 3.5:
+        st.error(f"**⚡ Sensibilidade Setorial ({industry}):** A falta de rigor no PMO prejudica diretamente a capacidade de entrega no prazo (SLA) e gera estouro contínuo na capacidade das equipes.")
 
     st.subheader("3. Escopo Comercial Recomendado (Atuação Smart CG)")
     
+    # Recomendações adaptadas ao PORTE DA EMPRESA
+    is_large = "Grande" in project_scope
+    is_medium = "Médio" in project_scope
+    
     recs = []
     if score_gov < 3.8:
-        recs.append("• **Governança & Ritos de Gestão (IBGC):** Implementação de Matriz RACI, alçadas de decisão e Rituais de Acompanhamento Trimestral de Resultados.")
+        tag = "Enterprise (Governança Corporativa e Conselho)" if is_large else "Estruturação de Ritos e Alçadas"
+        recs.append(f"• **Governança & Ritos de Gestão - {tag}:** Implementação de Matriz RACI, acionamento de comitês executivos e rituais formais de acompanhamento de resultados.")
+        
     if score_proj < 3.8:
-        recs.append("• **Estruturação de PMO (PMI):** Padronização do ciclo de vida dos projetos, templates, visibilidade em tempo real e capacitação de gerentes de projeto.")
+        tag = "PMO Corporativo / EPM" if is_large else ("PMO Tático de Projetos" if is_medium else "PMO Enxuto / Ágil")
+        recs.append(f"• **Estruturação de PMO ({tag}):** Padronização do ciclo de vida dos projetos, visibilidade executiva em tempo real e treinamento de gestores.")
+        
     if score_proc < 3.8:
-        recs.append("• **Mapeamento & Otimização de Processos (BPM):** Diagnóstico AS-IS, eliminação de gargalos/retrabalho, documentação TO-BE e automação de workflows.")
+        tag = "Arquitetura e Automação BPMN" if is_large else "Mapeamento e Otimização AS-IS / TO-BE"
+        recs.append(f"• **Mapeamento & Otimização de Processos ({tag}):** Mapeamento de fluxos críticos, eliminação de gargalos/retrabalho e definição de POPs/workflows.")
+        
     if score_chg < 3.8:
-        recs.append("• **Plano Integrado de Gestão de Mudanças (HUCMI):** Análise de impactos, matriz de stakeholders, plano de comunicação e capacitação para garantir rápida adesão.")
+        recs.append("• **Plano Integrado de Gestão de Mudanças (HUCMI):** Análise de impactos por função, matriz de stakeholders e plano de comunicação/capacitação.")
+        
     if score_qa < 3.8:
-        recs.append("• **Garantia da Qualidade (QA & PDCA):** Implantação de auditoria de processos, análise de causa raiz (RNC) e checklists de validação de entregas.")
+        recs.append("• **Garantia da Qualidade (QA & PDCA):** Implantação de auditorias internas de processo, tratamento de RNC (causa raiz) e rotinas de melhoria.")
 
     for r in recs:
         st.write(r)
 
-    st.divider()
-    st.caption("Aplicação desenvolvida para diagnóstico comercial e técnico da Smart Consultoria & Governança.")
     st.divider()
     st.caption("Aplicação desenvolvida para diagnóstico comercial e técnico da Smart Consultoria & Governança.")
