@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-# Configuração da Página
+# ==============================================================================
+# CONFIGURAÇÃO DA PÁGINA (DEVE SER A PRIMEIRA CHAMADA DO STREAMLIT)
+# ==============================================================================
 st.set_page_config(
     page_title="Smart CG | Diagnóstico Quantitativo de Execução Estratégica",
     page_icon="📊",
-    page_layout="wide",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
@@ -431,5 +433,7 @@ with tab_report:
     for r in recs:
         st.write(r)
 
+    st.divider()
+    st.caption("Aplicação desenvolvida para diagnóstico comercial e técnico da Smart Consultoria & Governança.")
     st.divider()
     st.caption("Aplicação desenvolvida para diagnóstico comercial e técnico da Smart Consultoria & Governança.")
